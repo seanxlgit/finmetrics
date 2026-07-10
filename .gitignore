@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual env
+.venv/
+venv/
+env/
+
+# pytest
+.pytest_cache/
+
+#mypy
+.mypy_cache/
+
+# Ruff
+.ruff_cache
+
+# Coverage
+.coverage
+htmlcov/
+
+# macOS
+.DS_Store
+
+# VSCode
+.vscode/
+
+# JetBrains
+.idea/
+
+# build
+build/
+dist/
+*.egg-info
+
+# Jupyter
+.ipynb_checkpoints/
+
+
