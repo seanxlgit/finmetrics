@@ -27,17 +27,24 @@ async def fetch_all(
     timeout: float = 2.0,
 ) -> dict[str, float | None]:
     """Fetch prices for all tickers concurrently.
-    At most `max_concurrency` request in flight; each request limited to `timeout` seconds.  Tickers that time out or fail map to None; other tickers are unaffected.
+    At most `max_concurrency` request in flight;
+    each request limited to `timeout` seconds.
+    Tickers that time out or fail map to None;
+    other tickers are unaffected.
     """
     sem = asyncio.Semaphore(max_concurrency)
     results = await asyncio.gather(*(_fetch_guarded(t, sem, timeout) for t in tickers))
     return dict(zip(tickers, results))
 
 
-# Test
+# Manual smoke run
 if __name__ == "__main__":
-    out = asyncio.run(fetch_all(["AAPL", "IBM", "BABA", "FAIL", "BA", "NVDA"], max_concurrency=3, timeout=2.0))
+    out = asyncio.run(
+        fetch_all(
+            ["AAPL", "IBM", "BABA", "FAIL", "BA", "NVDA"],
+            max_concurrency=3,
+            timeout=2.0,
+        )
+    )
     print(out)
-# print("Try again ...")
-# print(asyncio.run(fetch_all(["AAPL", "FAIL", "BABA"])))
 
