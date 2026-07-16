@@ -2,10 +2,10 @@
 name = "finmetrics"
 version = "0.1.0"
 requires-python = ">=3.11"
-dependencies = ["numpy"]
+dependencies = ["numpy", "fastapi", "pydantic"]
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = ["pytest", "httpx"]
 
 [tool.setuptools.packages.find]
 where = ['src']
