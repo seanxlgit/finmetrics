@@ -2,7 +2,7 @@
 name = "finmetrics"
 version = "0.1.0"
 requires-python = ">=3.11"
-dependencies = ["numpy", "fastapi", "pydantic"]
+dependencies = ["numpy", "fastapi", "uvicorn", "pydantic"]
 
 [project.optional-dependencies]
 dev = ["pytest", "httpx"]
