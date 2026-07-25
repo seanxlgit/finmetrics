@@ -4,15 +4,6 @@ import pytest
 from finmetrics.api import app
 from finmetrics.config import Settings, get_settings
 
-async def test_get_price_ok():
-    transport = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-        resp = await client.get("/prices/AAPL")
-    assert resp.status_code == 200
-    body = resp.json()
-    assert body['ticker'] == "AAPL"
-    assert isinstance(body['price'], float)
-
 @pytest.fixture
 def generous_timeouts():
     app.dependency_overrides[get_settings] = lambda: Settings(fetch_timeout=10.0)

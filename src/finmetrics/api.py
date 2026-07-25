@@ -26,8 +26,11 @@ class MetricResponse(BaseModel):
 
 
 @app.get("/prices/{ticker}", response_model=PriceResponse)
-async def get_price(ticker: str) -> PriceResponse:
-    result = await fetch_all([ticker])
+async def get_price(
+    ticker: str,
+    settings: Settings = Depends(get_settings),
+) -> PriceResponse:
+    result = await fetch_all([ticker], settings.max_concurrency, settings.fetch_timeout)
     price = result[ticker]
     if price is None:
         raise HTTPException(status_code=502, detail=f"Upstream fetch failed for {ticker}")
