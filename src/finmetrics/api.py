@@ -2,7 +2,7 @@ from typing import Literal
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel, Field
 
-from finmetrics.fetcher import fetch_all
+from finmetrics.fetcher import fetch_all, fetch_history
 from finmetrics.config import Settings, get_settings
 from finmetrics.metrics import annualized_volatility, max_drawdown
 
@@ -41,10 +41,10 @@ async def get_prices(
     # POST, not GET: this is a query with a request BODY. GET bodies are
     # ignored/stripped by proxies and caches; a 100-ticker list doesn't
     # belong in a URL. POST-as-query is standard for batch reads.
-    results = await fetch_all(req.tickers, settings.max_concurrentcy, settings.fetch_timeout)
+    results = await fetch_all(req.tickers, settings.max_concurrency, settings.fetch_timeout)
     return BatchPriceResponse(prices=results)
 
-@app.get("/metrics/{ticker}", response_model=MetricsResponse)
+@app.get("/metrics/{ticker}", response_model=MetricResponse)
 async def get_metric(
     ticker: str,
     metric: Literal["mdd", "vol"],

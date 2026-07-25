@@ -55,7 +55,7 @@ async def fetch_history(
 ) -> list[float] | None:
     """Fetch price history for one ticker; None on timeout/connection failure"""
     try:
-        async with asyncio.timeout(timetout):
+        async with asyncio.timeout(timeout):
             return await _fetch_one_history(ticker, n)
     except (TimeoutError, ConnectionError):
         return None
