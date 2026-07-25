@@ -6,6 +6,7 @@ from finmetrics.fetcher import fetch_all, fetch_history
 from finmetrics.config import Settings, get_settings
 from finmetrics.metrics import annualized_volatility, max_drawdown
 
+MetricName = Literal["mdd", "vol"]
 app = FastAPI(title="Market Data API")
 
 class PriceResponse(BaseModel):
@@ -20,7 +21,7 @@ class BatchPriceResponse(BaseModel):
 
 class MetricResponse(BaseModel):
     ticker: str
-    metric: str
+    metric: MetricName
     value: float
     n_observations: int
 
@@ -30,7 +31,12 @@ async def get_price(
     ticker: str,
     settings: Settings = Depends(get_settings),
 ) -> PriceResponse:
-    result = await fetch_all([ticker], settings.max_concurrency, settings.fetch_timeout)
+    result = await fetch_all(
+        [ticker],
+        settings.max_concurrency,
+        settings.fetch_timeout,
+        settings,
+    )
     price = result[ticker]
     if price is None:
         raise HTTPException(status_code=502, detail=f"Upstream fetch failed for {ticker}")
@@ -44,16 +50,25 @@ async def get_prices(
     # POST, not GET: this is a query with a request BODY. GET bodies are
     # ignored/stripped by proxies and caches; a 100-ticker list doesn't
     # belong in a URL. POST-as-query is standard for batch reads.
-    results = await fetch_all(req.tickers, settings.max_concurrency, settings.fetch_timeout)
+    results = await fetch_all(
+        req.tickers,
+        settings.max_concurrency,
+        settings.fetch_timeout,
+        settings,
+        )
     return BatchPriceResponse(prices=results)
 
 @app.get("/metrics/{ticker}", response_model=MetricResponse)
 async def get_metric(
     ticker: str,
-    metric: Literal["mdd", "vol"],
+    metric: MetricName,
     settings: Settings = Depends(get_settings),
 ) -> MetricResponse:
-    prices = await fetch_history(ticker, timeout=settings.fetch_timeout)
+    prices = await fetch_history(
+        ticker,
+        timeout=settings.fetch_timeout,
+        settings=settings,
+    )
     if prices is None:
         raise HTTPException(status_code=502, detail=f"Upstream fetch failed for {ticker}")
     if metric == "mdd":

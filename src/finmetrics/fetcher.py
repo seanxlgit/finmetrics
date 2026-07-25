@@ -2,18 +2,27 @@ import asyncio
 import random
 from collections.abc import Sequence
 
-async def _fetch_one(ticker: str) -> float:
-    """ Simulate a network call: 0.5-3.0s latency, fake price back. """
+from finmetrics.config import Settings, get_settings
+
+async def _fetch_one(
+    ticker: str,
+    settings: Settings,
+) -> float:
+    """ Simulate a network call with min- and max-latency, fake price back. """
     if ticker == "FAIL":
         raise ConnectionError(f"Connection refused for {ticker}")
-    await asyncio.sleep(random.uniform(0.5, 3.0))
+    await asyncio.sleep(random.uniform(settings.min_latency, settings.max_latency))
     return round(random.uniform(10, 500), 2)
 
-async def _fetch_one_history(ticker: str, n: int) -> list[float]:
-    """ Simulate a network call: 0.5 - 3.0s latency, fake price history """
+async def _fetch_one_history(
+    ticker: str,
+    n: int,
+    settings: Settings,
+) -> list[float]:
+    """ Simulate a network call w/ min- and max-latency, fake price history """
     if ticker == "FAIL":
         raise ConnectionError(f"Connection refused for {ticker}")
-    await asyncio.sleep(random.uniform(0.5, 3.0))
+    await asyncio.sleep(random.uniform(settings.min_latency, settings.max_latency))
     price = random.uniform(10, 500)
     out = []
     for _ in range(n):
@@ -25,11 +34,12 @@ async def _fetch_guarded(
     ticker: str,
     sem: asyncio.Semaphore,
     timeout: float,
+    settings: Settings,
 ) -> float | None:
     try:
         async with sem:
             async with asyncio.timeout(timeout):
-                return await _fetch_one(ticker)
+                return await _fetch_one(ticker, settings)
     except (TimeoutError, ConnectionError):
         return None
 
@@ -37,6 +47,7 @@ async def fetch_all(
     tickers: Sequence[str],
     max_concurrency: int = 5,
     timeout: float = 2.0,
+    settings: Settings | None = None,
 ) -> dict[str, float | None]:
     """Fetch prices for all tickers concurrently.
     At most `max_concurrency` request in flight;
@@ -44,22 +55,33 @@ async def fetch_all(
     Tickers that time out or fail map to None;
     other tickers are unaffected.
     """
+    if settings is None:
+        settings = get_settings()
     sem = asyncio.Semaphore(max_concurrency)
-    results = await asyncio.gather(*(_fetch_guarded(t, sem, timeout) for t in tickers))
+    results = await asyncio.gather(
+        *(
+            _fetch_guarded(
+                t, sem, timeout, settings
+                ) for t in tickers
+        )
+    )
     return dict(zip(tickers, results))
 
 async def fetch_history(
     ticker: str,
     n: int = 252,
     timeout: float = 2.0,
+    settings: Settings | None = None,
 ) -> list[float] | None:
     """Fetch price history for one ticker; None on timeout/connection failure"""
+    if settings is None:
+        settings = get_settings()
+
     try:
         async with asyncio.timeout(timeout):
-            return await _fetch_one_history(ticker, n)
+            return await _fetch_one_history(ticker, n, settings)
     except (TimeoutError, ConnectionError):
         return None
-
 
 
 

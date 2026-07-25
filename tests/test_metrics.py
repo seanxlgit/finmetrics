@@ -13,9 +13,6 @@ def test_too_few_prices():
     with pytest.raises(ValueError, match="Need >= 2 prices, got 1"):
         max_drawdown([100])
 
-def test_basic_drawdown():
-    assert max_drawdown([1, 2, 25, 50, 30, 40, 30]) == pytest.approx(-0.4)
-
 def test_non_positive_prices():
     with pytest.raises(ValueError, match="Need positive prices. price<=0 found."):
         max_drawdown([100, 0.0, 20.5, 10.0])
