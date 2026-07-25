@@ -33,8 +33,6 @@ async def get_price(
 ) -> PriceResponse:
     result = await fetch_all(
         [ticker],
-        settings.max_concurrency,
-        settings.fetch_timeout,
         settings,
     )
     price = result[ticker]
@@ -52,8 +50,6 @@ async def get_prices(
     # belong in a URL. POST-as-query is standard for batch reads.
     results = await fetch_all(
         req.tickers,
-        settings.max_concurrency,
-        settings.fetch_timeout,
         settings,
         )
     return BatchPriceResponse(prices=results)
@@ -66,7 +62,6 @@ async def get_metric(
 ) -> MetricResponse:
     prices = await fetch_history(
         ticker,
-        timeout=settings.fetch_timeout,
         settings=settings,
     )
     if prices is None:
